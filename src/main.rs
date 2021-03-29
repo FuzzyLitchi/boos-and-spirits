@@ -13,11 +13,10 @@ struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system(setup.system())
-            .add_system(fit_camera_to_screen.system());
+            .add_system(fit_camera_to_screen.system())
+            .add_resource(ClearColor(Color::rgb(0., 0., 0.)));
     }
 }
-
-const SCREEN_SIZE: Vec2 = Vec2 { x: 326., y: 205. }; //in pixels
 
 fn setup(
     commands: &mut Commands,
@@ -29,14 +28,20 @@ fn setup(
     let cards_spritesheet = TextureAtlas::from_grid(cards_texture, Vec2::new(42., 57.), 3, 1);
     texture_atlases.set("cards", cards_spritesheet);
 
-    commands
-        .spawn(Camera2dBundle::default())
-        .spawn(SpriteSheetBundle {
-            texture_atlas: texture_atlases.get_handle("cards"),
-            sprite: TextureAtlasSprite::new(0), // index
-            transform: Transform::from_translation(Vec3::new(0., 0., 0.1)),
-            ..Default::default()
-        });
+    commands.spawn(Camera2dBundle::default());
+
+    for x in &[31., 80.] {
+        for y in &[38., 102., 166.] {
+            let pos = Vec2::new(*x, *y) + BOARD_POSITION;
+
+            commands.spawn(SpriteSheetBundle {
+                texture_atlas: texture_atlases.get_handle("cards"),
+                sprite: TextureAtlasSprite::new(0), // index
+                transform: Transform::from_translation(pos.extend(0.1)),
+                ..Default::default()
+            });
+        }
+    }
 
     let background_texture = asset_server.load("background.png");
     commands.spawn(SpriteBundle {
@@ -59,3 +64,9 @@ fn fit_camera_to_screen(windows: Res<Windows>, mut query: Query<&mut Transform, 
         }
     }
 }
+
+const SCREEN_SIZE: Vec2 = Vec2 { x: 326., y: 205. }; //in pixels
+const BOARD_POSITION: Vec2 = Vec2 {
+    x: -SCREEN_SIZE.x / 2.,
+    y: -SCREEN_SIZE.y / 2.,
+};
